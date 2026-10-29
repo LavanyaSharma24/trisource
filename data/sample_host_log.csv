@@ -1,0 +1,10 @@
+Timestamp,Image,CommandLine
+13:02:11,chrome.exe,"C:\Program Files\Google\Chrome\chrome.exe"
+13:05:40,notepad.exe,"notepad.exe report.txt"
+13:21:19,powershell.exe,"powershell.exe -EncodedCommand VwByAGkAdABlAC0ASABvAHMAdAA="
+13:25:29,schtasks.exe,"schtasks /create /tn Backdoor /tr ""cmd.exe /c calc.exe"" /sc onlogon"
+13:26:48,reg.exe,"reg add HKCU\Software\Microsoft\Windows\CurrentVersion\Run /v Updater /d C:\temp\x.exe /f"
+13:30:02,outlook.exe,"outlook.exe"
+13:40:45,systeminfo.exe,"systeminfo"
+13:40:52,tasklist.exe,"tasklist"
+13:41:10,powershell.exe,"powershell.exe -nop -w hidden -enc SQBFAFgA"

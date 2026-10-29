@@ -1,0 +1,8 @@
+# TriSource ingestion backend — runtime dependencies (Python 3.10+).
+# Pinned to the versions tested; all are pure Python, so they install on
+# Vercel / Render without a compiler.
+fastapi==0.162.0          # HTTP API + static file serving
+uvicorn==0.54.0           # ASGI server (local / Render)
+python-multipart==0.0.32  # multipart/form-data parsing for file uploads
+python-evtx==0.8.1        # Windows .evtx binary log decoder (Willi Ballenthin)
+defusedxml==0.7.1         # safe XML parsing of untrusted log records

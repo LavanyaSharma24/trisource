@@ -1,0 +1,15 @@
+# Render Blueprint — one web service serving the front-end and the /api backend.
+# Deploy: Render dashboard -> New -> Blueprint -> select this repo.
+services:
+  - type: web
+    name: trisource
+    runtime: python
+    plan: free
+    buildCommand: pip install -r requirements.txt
+    startCommand: uvicorn backend.app:app --host 0.0.0.0 --port $PORT
+    healthCheckPath: /api/health
+    envVars:
+      - key: PYTHON_VERSION
+        value: 3.12.7
+      - key: TRISOURCE_MAX_UPLOAD_MB
+        value: "50"

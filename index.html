@@ -1,0 +1,130 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1"/>
+<title>TriSource — Multi-Source DFIR Analyzer</title>
+<link rel="stylesheet" href="css/styles.css"/>
+</head>
+<body>
+<header>
+  <div class="logo">T·S</div>
+  <div>
+    <h1>TriSource — Multi-Source DFIR Analyzer</h1>
+    <div class="sub">Ingests host evidence → detects the attack, maps it to MITRE ATT&amp;CK, reconstructs the timeline, and scores multi-source coverage</div>
+  </div>
+</header>
+<div class="wrap">
+
+  <h2>1 · Input — provide evidence from the host</h2>
+  <div class="panel">
+    <div class="row" style="align-items:center">
+      <button class="btn" id="btnDemo">▶ Load demo case: victim01</button>
+      <button class="btn ghost" id="btnUpload">⬆ Upload an event log (.csv / .evtx)</button>
+      <input type="file" id="file" accept=".csv,.evtx"/>
+      <span class="hint" id="inStatus">No evidence loaded. Load the demo case, upload a CSV of events (columns: Timestamp, Image, CommandLine), or a Sysmon .evtx (needs the Python backend: <code>./run.sh</code>).</span>
+    </div>
+    <div class="hint rules-info" id="rulesInfo"></div>
+    <div class="stepper" id="stepper">
+      <span class="step" data-s="parse">Parse events</span>
+      <span class="step" data-s="detect">Apply detection rules</span>
+      <span class="step" data-s="correlate">Correlate across sources</span>
+      <span class="step" data-s="timeline">Reconstruct timeline</span>
+    </div>
+  </div>
+
+  <div id="results" style="display:none">
+    <div class="out-head"><h2>2 · Output</h2>
+      <button class="btn ghost" id="btnExport" title="Download the alerts and the coverage matrix (as currently shown, including source toggles) as a PDF">⬇ Export report (PDF)</button></div>
+    <div class="stats" id="stats"></div>
+
+    <div class="tabs" id="tabs">
+      <button class="tab sel" data-v="alerts">Detection alerts</button>
+      <button class="tab" data-v="timeline">Attack timeline</button>
+      <button class="tab" data-v="matrix">Coverage matrix</button>
+    </div>
+
+    <div class="panel">
+      <div class="view show" id="view-alerts">
+        <div class="hint" style="margin-bottom:10px">Each alert was generated live by the rule engine from the input events. <b style="color:var(--red)">Red = high severity.</b> Click any row for the evidence across all sources.</div>
+        <table><thead><tr><th>Time (UTC)</th><th>Technique</th><th>Tactic</th><th>Severity</th><th>Rule fired</th><th>Matched command</th></tr></thead>
+        <tbody id="alertRows"></tbody></table>
+      </div>
+      <div class="view" id="view-timeline">
+        <div class="hint" style="margin-bottom:14px">The attack reconstructed from the input, ordered and mapped to ATT&amp;CK tactics.</div>
+        <div class="tl" id="tl"></div>
+      </div>
+      <div class="view" id="view-matrix">
+        <div class="hint" style="margin-bottom:8px">Toggle an evidence source off to watch coverage collapse — the live proof that no single source is complete. <b style="color:var(--red)">Red cells = evidence missing.</b></div>
+        <div class="toggles" id="toggles">
+          <label><input type="checkbox" data-src="detection" checked> Endpoint logs</label>
+          <label><input type="checkbox" data-src="prefetch" checked> Prefetch</label>
+          <label><input type="checkbox" data-src="registry" checked> Registry</label>
+          <label><input type="checkbox" data-src="memory" checked> Memory</label>
+        </div>
+        <table class="matrix"><thead id="mxHead"></thead><tbody id="mxBody"></tbody></table>
+        <div class="headline" id="mxHeadline"></div>
+        <div class="muted" style="margin-top:8px">Y = detected / recovered &nbsp;·&nbsp; – = not applicable (benign default) &nbsp;·&nbsp; <b style="color:var(--red)">N = not present</b> &nbsp;·&nbsp; amber Y = detected with a caveat</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Always-visible explanation -->
+  <h2>3 · How it works — codes, algorithms &amp; design</h2>
+  <div class="panel how">
+    <p>TriSource is a four-stage pipeline. Detection, correlation and scoring run client-side in vanilla JavaScript, so the logic is fully auditable and the tool runs offline from a file. Only <code>.evtx</code> parsing uses the optional Python backend.</p>
+
+    <h3>Stage 1 — Parse (<code>js/app.js → parseCSV</code> · <code>backend/evtx_parser.py</code>)</h3>
+    <p>Input is a CSV of host process events. The parser auto-detects the <code>Timestamp</code>, <code>Image</code> and <code>CommandLine</code> columns by header name and tokenises each row with a small quote-aware splitter, producing a normalised list of <code>{ts, img, cmd}</code> events. The demo case loads the project's real victim01 events instead of a file.</p>
+    <p>Real Windows logs: a Sysmon <code>.evtx</code> is posted to the optional Python backend (FastAPI + <b>python-evtx</b>), which decodes the binary log, keeps Sysmon <i>Process Create</i> records (Event ID 1) and returns <code>{ts, image, commandline, record_id}</code> — each event traceable to its original <code>EventRecordID</code>. Records it skips are counted, not hidden. Stages 2–4 then run in the browser exactly as for a CSV; the backend does no detection.</p>
+
+    <h3>Stage 2 — Detect (<code>js/rules.js → detect</code>)</h3>
+    <p>A signature engine runs every event against an ordered rule set. Each rule is a regular expression over the command line mapped to a MITRE ATT&amp;CK technique and a severity:</p>
+    <pre>{ "id": "T1053.005", "sev": "high", "pattern": "schtasks.*\\/create", "flags": "i",
+  "rule": "Suspicious Command Patterns In Scheduled Task Creation" }</pre>
+    <p>The rules live in <code>rules.json</code>, so they can be edited without touching code; the line under the input panel shows which rule set is active. Opened from disk, the page uses the identical copy embedded in <code>js/rules.js</code> (browsers block <code>file://</code> reads).</p>
+    <p>Rules are ordered most-specific first, and the first match per event wins (<code>O(events × rules)</code>). This is the same matching model Sigma uses — a field condition yielding a technique and a level — which is exactly what <b>Hayabusa</b> and <b>Chainsaw</b> applied to the real Sysmon logs in the study. Caveats are attached where a real rule mis-labels a technique (T1112 → T1137) or where only threat-hunting rules catch it (T1057).</p>
+
+    <h3>Stage 3 — Correlate (<code>CASE_SOURCES</code> join)</h3>
+    <p>For the demo case, each detected technique is joined against the disk and memory findings — Prefetch (execution), Registry (persistence) and memory — recording for each source whether the technique was <code>Y</code> recovered, <code>N</code> not present, or <code>–</code> not applicable. These values are the real outputs of the project's three analysis tracks.</p>
+
+    <h3>Stage 4 — Reconstruct &amp; score (<code>renderTimeline</code>, <code>renderMatrix</code>)</h3>
+    <p>Events are ordered into an attack timeline annotated with tactic and outcome (including failed techniques, e.g. wmic on Windows 11 25H2). Coverage is then scored: a technique counts as <i>recovered</i> when at least two independent sources contain it. Toggling a source recomputes the score live — demonstrating that removing any single source (e.g. an attacker clearing the logs) causes evidence to disappear.</p>
+
+    <h3>Why it works</h3>
+    <ul>
+      <li><b>Technique-centric correlation.</b> Mapping every artifact to an ATT&amp;CK ID gives a common key to join otherwise unrelated sources (a log line, a prefetch file, a registry value).</li>
+      <li><b>Independence of sources.</b> Because logs, disk and memory are captured and fail independently, agreement across two of them is strong corroboration — and disagreement is itself a finding (T1112 is invisible in the registry but visible in prefetch).</li>
+      <li><b>Severity triage.</b> Reserving colour for danger (high severity and missing evidence) keeps the analyst's eye on the red flags instead of the noise.</li>
+    </ul>
+
+    <h3>Repository layout</h3>
+    <pre>index.html          UI shell
+css/styles.css      near-monochrome theme (colour = red flags only)
+js/data.js          ATT&CK reference + real victim01 case data
+js/rules.js         the detection rule engine
+js/app.js           parse → pipeline → correlate → render
+js/config.js        where the optional backend lives
+js/report.js        dependency-free PDF export
+rules.json          the detection rules (edit here)
+backend/            FastAPI + python-evtx ingestion (Stage 1 for .evtx)
+data/sample_host_log.csv   a second log to analyse live
+docs/HOW_IT_WORKS.md       extended write-up</pre>
+    <p class="muted">Extend it by adding rules to <code>rules.json</code> (then <code>python3 scripts/sync_rules.py</code> to refresh the offline copy) — no other file needs to change.</p>
+  </div>
+</div>
+
+<div class="modal" id="modal"><div class="box">
+  <button class="close" id="mClose">×</button>
+  <h3 id="mTitle"></h3>
+  <div class="muted" id="mSub"></div>
+  <div id="mSrcs"></div>
+</div></div>
+
+<script src="js/config.js"></script>
+<script src="js/data.js"></script>
+<script src="js/rules.js"></script>
+<script src="js/report.js"></script>
+<script src="js/app.js"></script>
+</body>
+</html>

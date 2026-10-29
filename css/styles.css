@@ -1,0 +1,99 @@
+/* TriSource — near-monochrome theme. Color is reserved for RED FLAGS only. */
+:root{
+  --bg:#0C141D; --panel:#131E29; --panel2:#0f1822; --line:#223040;
+  --txt:#DCE5EE; --mut:#7E8E9E; --faint:#4b5a6a;
+  --accent:#5E7E97;            /* muted steel — structure/active, used sparingly */
+  --ok:#64788A;                /* calm grey-blue = "fine / recovered" (intentionally dull) */
+  --amber:#D9A441;             /* caveat / medium severity */
+  --red:#E4443A;               /* DANGER — the only vivid color: high sev, N, failures */
+  --red-bg:#2A1413; --amber-bg:#2a2214;
+}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--txt);font-family:-apple-system,Segoe UI,Roboto,Helvetica,Arial,sans-serif;line-height:1.5}
+header{padding:18px 28px;border-bottom:1px solid var(--line);display:flex;align-items:center;gap:15px;flex-wrap:wrap}
+header .logo{width:38px;height:38px;border-radius:8px;background:#1b2b3a;border:1px solid var(--line);display:flex;align-items:center;justify-content:center;font-weight:700;font-size:15px;color:var(--txt);flex:0 0 auto}
+header h1{font-size:19px;margin:0;font-weight:700}
+header .sub{font-size:12.5px;color:var(--mut);margin-top:2px}
+.wrap{max-width:1180px;margin:0 auto;padding:22px 28px 70px}
+h2{font-size:14px;letter-spacing:1px;text-transform:uppercase;color:var(--mut);margin:28px 0 12px;font-weight:700}
+.panel{background:var(--panel);border:1px solid var(--line);border-radius:12px;padding:18px 20px}
+.row{display:flex;gap:14px;flex-wrap:wrap}
+.btn{background:var(--accent);color:#07121b;border:none;border-radius:8px;padding:11px 18px;font-weight:700;font-size:14px;cursor:pointer}
+.btn.ghost{background:transparent;color:var(--txt);border:1px solid var(--line)}
+.btn:hover{filter:brightness(1.1)}
+.hint{font-size:12.5px;color:var(--mut)}
+.stepper{display:flex;gap:10px;flex-wrap:wrap;margin-top:14px}
+.step{font-size:12.5px;color:var(--mut);background:var(--panel2);border:1px solid var(--line);border-radius:20px;padding:6px 13px;opacity:.5;transition:all .3s}
+.step.active{opacity:1;color:var(--txt);border-color:var(--accent)}
+.step.done{opacity:1;color:var(--txt);border-color:var(--faint)}
+.step.done::before{content:"✓ ";color:var(--ok)}
+.stats{display:grid;grid-template-columns:repeat(4,1fr);gap:14px}
+.stat{background:var(--panel);border:1px solid var(--line);border-radius:12px;padding:15px 18px}
+.stat .n{font-size:32px;font-weight:800;line-height:1;color:var(--txt)}
+.stat.flag .n{color:var(--red)}
+.stat .l{font-size:12px;color:var(--mut);margin-top:6px}
+.tabs{display:flex;gap:8px;flex-wrap:wrap;margin:8px 0 14px}
+.tab{padding:9px 16px;border-radius:8px;border:1px solid var(--line);background:transparent;color:var(--mut);cursor:pointer;font-weight:600;font-size:13.5px}
+.tab.sel{background:var(--panel2);color:var(--txt);border-color:var(--accent)}
+.view{display:none}.view.show{display:block}
+table{width:100%;border-collapse:collapse;font-size:13px}
+th,td{text-align:left;padding:9px 11px;border-bottom:1px solid var(--line);vertical-align:top}
+th{color:var(--mut);font-size:11.5px;text-transform:uppercase;letter-spacing:.5px}
+tr.alert{cursor:pointer}
+tr.alert:hover{background:var(--panel2)}
+/* HIGH severity = alarming: red left bar, tinted row, pulsing badge */
+tr.row-high{background:var(--red-bg)}
+tr.row-high td:first-child{box-shadow:inset 3px 0 0 var(--red)}
+tr.row-high:hover{background:#351815}
+.chip{display:inline-block;padding:2px 9px;border-radius:11px;font-size:11px;font-weight:700}
+.sev-high{background:var(--red);color:#fff;animation:pulse 1.25s ease-in-out infinite}
+.sev-medium{background:var(--amber-bg);color:var(--amber);border:1px solid var(--amber)}
+.sev-low{background:transparent;color:var(--mut);border:1px solid var(--line)}
+.sev-informational{background:transparent;color:var(--faint);border:1px solid var(--line)}
+@keyframes pulse{0%,100%{box-shadow:0 0 0 0 rgba(228,68,58,.55)}50%{box-shadow:0 0 0 5px rgba(228,68,58,0)}}
+.flag-tag{background:var(--amber-bg);color:var(--amber);border:1px solid var(--amber);padding:1px 7px;border-radius:10px;font-size:10.5px;font-weight:700;margin-left:6px}
+.mono{font-family:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;font-size:12px;color:#b7c6d4;background:var(--panel2);padding:2px 6px;border-radius:5px;word-break:break-all}
+.tl{position:relative;margin-left:8px;padding-left:22px;border-left:2px solid var(--line)}
+.tl .ev{position:relative;margin-bottom:16px}
+.tl .ev::before{content:"";position:absolute;left:-29px;top:4px;width:12px;height:12px;border-radius:50%;background:var(--ok);border:2px solid var(--bg)}
+.tl .ev.hi::before{background:var(--red)} .tl .ev.fail::before{background:var(--red)} .tl .ev.benign::before{background:var(--faint)}
+.tl .t{font-size:12px;color:var(--mut);font-family:ui-monospace,monospace}
+.tl .d{font-size:14px;font-weight:600}
+.tl .d.hi{color:var(--red)}
+.tl .tac{font-size:11.5px;color:var(--mut)}
+.matrix td,.matrix th{text-align:center}
+.matrix td:first-child,.matrix th:first-child{text-align:left}
+.cell{display:block;padding:7px 0;border-radius:6px;font-weight:700;font-size:12.5px}
+.c-y{background:#1b2a37;color:var(--ok);border:1px solid var(--line)}   /* recovered = calm/dull */
+.c-n{background:var(--red);color:#fff}                                  /* MISSING = red flag */
+.c-amber{background:var(--amber-bg);color:var(--amber);border:1px solid var(--amber)} /* caveat flag */
+.c-dash{background:var(--panel2);color:var(--faint)}
+.toggles{display:flex;gap:16px;flex-wrap:wrap;margin:6px 0 14px}
+.toggles label{font-size:13px;color:var(--txt);display:flex;align-items:center;gap:7px;cursor:pointer}
+.headline{margin-top:14px;font-size:15px;font-weight:700;color:var(--txt)}
+.headline.warn{color:var(--red)}
+.modal{position:fixed;inset:0;background:rgba(3,8,13,.78);display:none;align-items:center;justify-content:center;padding:24px;z-index:50}
+.modal.show{display:flex}
+.modal .box{background:var(--panel);border:1px solid var(--line);border-radius:14px;max-width:720px;width:100%;max-height:84vh;overflow:auto;padding:24px}
+.modal h3{margin:0 0 4px;font-size:20px}
+.src{border:1px solid var(--line);border-radius:9px;padding:12px 14px;margin-top:12px}
+.src.danger{border-color:var(--red);background:var(--red-bg)}
+.src .sh{font-weight:700;font-size:13px;display:flex;align-items:center;gap:8px}
+.dot{width:10px;height:10px;border-radius:50%;display:inline-block}
+.muted{color:var(--mut);font-size:12.5px}
+.close{float:right;background:none;border:none;color:var(--mut);font-size:22px;cursor:pointer;line-height:1}
+.empty{color:var(--mut);padding:30px;text-align:center;font-size:14px}
+input[type=file]{display:none}
+.filechip{font-size:12.5px;color:var(--ok);margin-left:4px}
+/* How it works */
+.how h3{font-size:15px;margin:18px 0 6px;color:var(--txt)}
+.how p,.how li{font-size:13.5px;color:var(--txt)}
+.how ol,.how ul{margin:6px 0 10px;padding-left:20px}
+.how code{font-family:ui-monospace,monospace;font-size:12px;background:var(--panel2);padding:1px 5px;border-radius:4px;color:#b7c6d4}
+pre{background:var(--panel2);border:1px solid var(--line);border-radius:8px;padding:12px 14px;overflow:auto;font-size:12px;color:#b7c6d4}
+/* Extensions: backend errors, active-rule-set line, output header with export */
+.err{color:var(--red);font-weight:600}
+.rules-info{margin-top:10px;font-size:12px}
+.rules-info .mono{font-size:11.5px}
+.out-head{display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap}
+.out-head .btn{padding:7px 14px;font-size:13px}
